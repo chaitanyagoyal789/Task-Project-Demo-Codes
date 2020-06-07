@@ -1,0 +1,161 @@
+import RPi.GPIO as GPIO
+import dht11
+import time
+import datetime
+import smtplib
+from gpiozero import Button, MotionSensor
+from picamera import PiCamera
+from time import sleep
+from signal import pause
+from sensor1 import distance
+from sensor2 import Distance
+from sensor3 import Dist
+from sensor5 import dist
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+
+camera = PiCamera()
+camera.resolution = (2592, 1944)
+camera.framerate = 15
+#Email Variables
+SMTP_SERVER = 'smtp.gmail.com' #Email Server (don't change!)
+SMTP_PORT = 587 #Server Port (don't change!)
+GMAIL_USERNAME = 'chaitanyagoyal567@gmail.com' #change this to match your gmail account
+GMAIL_PASSWORD = 'Chaitanya.123'  #change this to match your gmail password
+GPIO.setmode(GPIO.BCM)
+
+class Emailer:
+    def sendmail(self, recipient, subject, content,image):
+
+    #Create Headers
+        emailData = MIMEMultipart()
+        emailData['Subject'] = subject
+        emailData['To'] = recipient
+        emailData['From'] = GMAIL_USERNAME
+        emailData.attach(MIMEText(content))
+        imageData = MIMEImage(open(image, 'rb').read(), 'jpg')
+        imageData.add_header('Content-Disposition', 'attachment', filename= "image.jpg")
+ 
+        emailData.attach(imageData)
+        #Connect to Gmail Server
+        session = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        session.ehlo()
+        session.starttls()
+        session.ehlo()
+ 
+        #Login to Gmail
+        session.login(GMAIL_USERNAME, GMAIL_PASSWORD)
+ 
+        #Send Email & Exit
+        session.sendmail(GMAIL_USERNAME, recipient, emailData.as_string())
+        session.quit
+ 
+sender = Emailer()
+
+sendTo = 'chaitanyagoyal789@gmail.com'
+
+# initialize GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+channel = 16
+channels = 19
+buzzer = 2
+GPIO.setup(channel, GPIO.IN)
+GPIO.setup(channels, GPIO.IN)
+GPIO.setup(buzzer, GPIO.OUT)
+# read data using pin 14
+instance = dht11.DHT11(pin=26)
+
+def callback(channel):
+    if GPIO.input(channel):
+        emailSubject = "Voice Detection Reading"
+        emailContent = ("Last Valid Input: " + str(datetime.datetime.now()) + "\nTemperature: %-3.1fC" %result.temperature + "\nHumidity: %-3.1f %%" % result.humidity)
+        image = '/home/pi/Desktop/voice.jpg'
+        camera.capture(image)
+        sendTo = 'chaitanyagoyal789@gmail.com'
+        emailSubject = "Voice Detected"
+        emailContent = "The voice Detected at this time: "+ time.ctime()
+        sender.sendmail(sendTo, emailSubject, emailContent, image)
+        print('Sound Detected!')
+    else:
+        print('Sound Detected!')
+#button = Button(2)
+#pir = MotionSensor(4)
+#camera = PiCamera()
+
+#start the camera
+#camera.rotation = 180
+#camera.start_preview()
+
+#image image names
+i = 0
+
+#stop the camera when the pushbutton is pressed
+def stop_camera():
+    camera.stop_preview()
+    #exit the program
+    exit()
+
+def callbacks(channels):
+    if GPIO.input(channels):
+        emailSubject = "Moisture Detection Reading"
+        emailContent = ("Last Valid Input: " + str(datetime.datetime.now()) + "\nTemperature: %-3.1fC" %result.temperature + "\nHumidity: %-3.1f %%" % result.humidity)
+        image = '/home/pi/Desktop/voice.jpg'
+        camera.capture(image)
+        sendTo = 'chaitanyagoyal789@gmail.com'
+        emailSubject = "Voice Detected"
+        emailContent = "The voice Detected at this time: "+ time.ctime()
+        sender.sendmail(sendTo, emailSubject, emailContent, image)
+        print('No Water Detected!')
+    else:
+        print('Water Detected!')
+
+
+try:
+    while True:
+        result = instance.read()
+        if result.is_valid():
+            from picamera import PiCamera
+            image = '/home/pi/Desktop/voice.jpg'
+            camera.capture(image)
+            sendTo = 'chaitanyagoyal789@gmail.com'
+            emailSubject = "Voice Detected"
+            emailContent = "The voice Detected at this time: "+ time.ctime()
+            print("Last valid input: " + str(datetime.datetime.now()))
+            emailSubject = "Temperature and Humidity Readings"
+            emailContent = ("Last Valid Input: " + str(datetime.datetime.now()) + "\nTemperature: %-3.1fC" %result.temperature + "\nHumidity: %-3.1f %%" % result.humidity)
+            sender.sendmail(sendTo, emailSubject, emailContent, image)
+            print("Temperature: %-3.1f C" % result.temperature)
+            print("Humidity: %-3.1f %%" % result.humidity)
+        
+
+        GPIO.add_event_detect(channel, GPIO.BOTH, bouncetime=300)
+        GPIO.add_event_callback(channel, callback)
+        image = '/home/pi/Desktop/voice.jpg'
+        camera.capture(image)
+        sendTo = 'chaitanyagoyal789@gmail.com'
+        emailSubject = "Voice Detected"
+        emailContent = "The voice Detected at this time: "+ time.ctime()
+        sender.sendmail(sendTo, emailSubject, emailContent, image)
+        GPIO.add_event_detect(channels, GPIO.BOTH, bouncetime=300)            
+        GPIO.add_event_callback(channels, callbacks)
+        if(distance()<=5 or Distance()<=5 or dist()<=5 or Dist()<=5):
+            GPIO.output(buzzer,GPIO.HIGH)
+            time.sleep(2)
+	    GPIO.output(buzzer, GPIO.LOW) 
+            emailSubject = "Baby Moving Detected"
+            emailContent = ("Last Valid Input: " + str(datetime.datetime.now()) + "\nTemperature: %-3.1fC" %result.temperature + "\nHumidity: %-3.1f %%" % result.humidity)
+            sender.sendmail(sendTo, emailSubject, emailContent, image)
+            print("Baby Motion Detected")
+        pir.when_motion 
+        image = '/home/pi/Desktop/voice.jpg'
+        camera.capture(image)
+        sendTo = 'chaitanyagoyal789@gmail.com'
+        emailSubject = "Motion Detected"
+        emailContent = "The voice Detected at this time: "+ time.ctime()
+        sender.sendmail(sendTo, emailSubject, emailContent, image)
+        #GPIO.add_event_detect(channels, GPIO.BOTH, bouncetime=300) 
+except KeyboardInterrupt:
+    print("Cleanup")
+    GPIO.cleanup()
