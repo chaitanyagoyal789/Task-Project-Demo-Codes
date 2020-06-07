@@ -1,0 +1,26 @@
+import RPi.GPIO as GPIO
+import time
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+
+TRIG = 24
+ECHO = 25
+
+GPIO.setup(TRIG, GPIO.OUT)
+GPIO.setup(ECHO, GPIO.IN)
+def Dist():
+    GPIO.output(TRIG, GPIO.HIGH)
+    time.sleep(0.0001)
+    GPIO.output(TRIG, GPIO.LOW)
+
+    while GPIO.input(ECHO) == GPIO.LOW:
+        start = time.time()
+    while GPIO.input(ECHO) == GPIO.HIGH:
+        end = time.time()
+    sig_time = end - start
+    Dist = sig_time / 0.000058
+##distance()
+    print('Distance: {} cm'.format(Dist))
+    return Dist
+#distance()
+#GPIO.cleanup()
